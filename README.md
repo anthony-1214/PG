@@ -1,4 +1,7 @@
-# Flask + MySQL Demo
+# 資料庫系統
+姓名：劉澤文
+學號：41271128H
+系級:科技116
 
 ## Quickstart
 

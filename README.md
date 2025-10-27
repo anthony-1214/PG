@@ -3,3 +3,7 @@
 HW1:
 
 Youtube link:https://youtu.be/KZawmlKaIVE
+
+HW2:
+
+Youtube link:

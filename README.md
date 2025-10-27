@@ -5,7 +5,7 @@
 
 系級：科技116
 
-## HW1：儲存會員資料系統
+## HW1：衣服訂購系統
 
 1) Create and activate a virtualenv
 ```bash

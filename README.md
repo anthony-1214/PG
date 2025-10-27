@@ -1,13 +1,3 @@
-# 資料庫系統
+# 1141資料庫系統
 
-Features:
-- New product form (/admin/products/new)
-- Session cart
-- Checkout creates orders & order_items
-
-Quickstart:
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-python3 app.py
+HW1

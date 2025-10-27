@@ -6,4 +6,4 @@ Youtube link:https://youtu.be/KZawmlKaIVE
 
 HW2:
 
-Youtube link:
+Youtube link:https://youtu.be/ayfLzPSpCg4

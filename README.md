@@ -1,4 +1,4 @@
-# Flask Clothes Shop + MySQL (Demo)
+# 資料庫系統
 
 Features:
 - New product form (/admin/products/new)

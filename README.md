@@ -2,4 +2,4 @@
 
 HW1:
 
-Youtube link:
+Youtube link:https://youtu.be/KZawmlKaIVE

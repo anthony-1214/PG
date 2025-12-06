@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-3">Cart</h3>
+
+{% if not items %}
+<p>No items yet. <a href="{{ url_for('home') }}">Go shopping</a>.</p>
+{% else %}
+<!-- === 更新購物車表單 === -->
+<form method="post" action="{{ url_for('update_cart') }}">
+  <div class="table-responsive">
+    <table class="table align-middle">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Size</th>
+          <th>Price</th>
+          <th>Qty</th>
+          <th>Subtotal</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for it in items %}
+        <tr id="item-{{ it.id }}">
+          <td>{{ it.name }}</td>
+          <td>{{ it.size }}</td>
+          <td>$ {{ '%.2f'|format(it.price) }}</td>
+          <td style="max-width:120px;">
+            <input class="form-control" type="number" min="0" name="qty_{{ it.id }}" value="{{ it.qty }}">
+          </td>
+          <td>$ {{ '%.2f'|format(it.subtotal) }}</td>
+          <td>
+            <!-- AJAX 刪除按鈕 -->
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeItem({{ it.id }})">
+              Remove
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="d-flex justify-content-between align-items-center">
+    <div class="fs-5">
+      Total: <strong>$ {{ '%.2f'|format(total) }}</strong>
+    </div>
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-outline-secondary">Update Cart</button>
+    </div>
+  </div>
+</form>
+
+<hr>
+
+<!-- === 結帳表單 === -->
+<form method="post" action="{{ url_for('checkout') }}" class="row g-3">
+  <div class="col-md-4">
+    <label class="form-label">Name</label>
+    <input name="customer_name" class="form-control" placeholder="Your Name">
+  </div>
+  <div class="col-md-4">
+    <label class="form-label">Email</label>
+    <input name="customer_email" type="email" class="form-control" placeholder="you@example.com">
+  </div>
+  <div class="col-md-4 d-grid align-items-end">
+    <label class="form-label opacity-0">Checkout</label>
+    <button class="btn btn-primary">Checkout</button>
+  </div>
+</form>
+{% endif %}
+
+<!-- === AJAX 刪除商品腳本 === -->
+<script>
+function removeItem(id) {
+  if (!confirm("Are you sure you want to remove this item?")) return;
+
+  fetch(`/cart/remove/${id}`, { method: "POST" })
+    .then(res => {
+      if (res.ok) {
+        document.getElementById(`item-${id}`).remove();
+      } else {
+        alert("Failed to remove item");
+      }
+    })
+    .catch(err => {
+      console.error("Error removing item:", err);
+      alert("Error occurred while removing item");
+    });
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-3">Orders</h3>
+{% if not orders %}
+<p>No orders yet.</p>
+{% else %}
+<div class="table-responsive">
+  <table class="table align-middle">
+    <thead>
+      <tr><th>#</th><th>Customer</th><th>Email</th><th>Total</th><th>Created</th></tr>
+    </thead>
+    <tbody>
+      {% for o in orders %}
+      <tr>
+        <td>{{ o.id }}</td>
+        <td>{{ o.customer_name }}</td>
+        <td>{{ o.customer_email }}</td>
+        <td>$ {{ '%.2f'|format(o.total) }}</td>
+        <td>{{ o.created_at }}</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

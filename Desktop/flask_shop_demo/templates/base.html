@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Clothes Shop Demo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  </head>
+  <body class="bg-light">
+    <nav class="navbar navbar-expand-lg bg-white border-bottom">
+      <div class="container">
+        <a class="navbar-brand fw-bold" href="{{ url_for('home') }}">👕 Clothes Shop</a>
+        
+        <div class="ms-auto nav">
+          <a class="nav-link" href="{{ url_for('home') }}">Products</a>
+          <a class="nav-link" href="{{ url_for('view_cart') }}">Cart</a>
+          <a class="nav-link" href="{{ url_for('orders') }}">Orders</a>
+          <a class="nav-link" href="{{ url_for('admin_new_product') }}">+ New Product</a>
+
+          <!-- ⭐⭐⭐ 新增 Batch 按鈕 ⭐⭐⭐ -->
+          <a class="nav-link text-primary fw-bold" href="{{ url_for('admin_batch') }}">Batch</a>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container py-4">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="mb-3">
+            {% for category, message in messages %}
+              <div class="alert alert-{{ 'secondary' if category=='info' else category }} m-0 py-2">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </main>
+
+  </body>
+</html>

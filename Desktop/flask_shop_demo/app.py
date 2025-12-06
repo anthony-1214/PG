@@ -279,5 +279,15 @@ def batch_insert():
 
 # === 啟動 ===
 if __name__ == "__main__":
-    ensure_schema()
-    app.run(debug=True, port=5001)
+    import os
+
+    # 👉 在 Render 上不執行 ensure_schema（避免連不到 MySQL）
+    #    本機跑時仍然會建立 MySQL schema
+    if os.getenv("ON_RENDER") != "1":
+        ensure_schema()
+
+    # 👉 Render 會提供 PORT 環境變數，本機預設使用 5001
+    port = int(os.environ.get("PORT", 5001))
+
+    # 👉 host=0.0.0.0 才能在 Render 對外服務
+    app.run(host="0.0.0.0", port=port, debug=False)

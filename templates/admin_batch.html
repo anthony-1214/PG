@@ -7,8 +7,6 @@
 <body>
   <h1>批次新增商品（MongoDB insert_many）</h1>
 
-  <p><a href="{{ url_for('home') }}">← 回到商品列表</a></p>
-
   <form action="{{ url_for('batch_insert') }}" method="POST">
     <p>請貼上 JSON 陣列：</p>
     <textarea name="json_data" rows="10" cols="80">[

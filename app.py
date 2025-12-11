@@ -1,7 +1,15 @@
 import os
 import json
 from pathlib import Path
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import (
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    flash,
+    session,
+)
 from dotenv import load_dotenv
 from pymongo import MongoClient
 from bson import ObjectId
@@ -16,7 +24,7 @@ SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key")
 IS_ON_RENDER = os.getenv("ON_RENDER") == "1"   # ★ 判斷是否在 Render
 
 # ======================================================
-# MongoDB 設定（Atlas）
+# MongoDB 設定（Atlas / Local）
 # ======================================================
 MONGO_URI = os.getenv("MONGO_URI") or os.getenv("MONGODB_URI") or "mongodb://localhost:27017"
 MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "shop_demo")
@@ -40,18 +48,22 @@ app.secret_key = SECRET_KEY
 def index():
     # 根據環境導向
     if IS_ON_RENDER:
+        # Render：直接看 MongoDB 批次新增頁
         return redirect(url_for("admin_batch"))
+    # 本機：進入 MySQL 商品頁
     return redirect(url_for("home_mysql"))
 
-# ★★★ 這個就是修正錯誤關鍵：給 base.html 用的 home endpoint ★★★
+
+# ★★★ 修正 navbar 用的 home endpoint ★★★
 @app.route("/home")
 def home():
     if IS_ON_RENDER:
         return redirect(url_for("admin_batch"))
     return redirect(url_for("home_mysql"))
 
+
 # ======================================================
-# ======= ★★★★★ MongoDB — 批次新增 + Multiple Delete ★★★★★
+# ======= MongoDB — 批次新增 + Multiple Delete =======
 # ======================================================
 
 @app.route("/admin_batch")
@@ -61,7 +73,7 @@ def admin_batch():
         d["_id"] = str(d["_id"])
     return render_template("admin_batch.html", items=docs)
 
-# 批次新增 insert_many
+
 @app.route("/batch_insert", methods=["POST"])
 def batch_insert():
     raw = request.form.get("json_data", "").strip()
@@ -71,18 +83,26 @@ def batch_insert():
 
     try:
         data = json.loads(raw)
+
+        # 允許單一物件或陣列
         if isinstance(data, dict):
             data = [data]
         if not isinstance(data, list):
             raise ValueError("JSON 必須是物件或物件陣列")
 
+        # 每筆都要是 dict
+        for doc in data:
+            if not isinstance(doc, dict):
+                raise ValueError("每筆資料都必須是 JSON 物件")
+
         result = mongo_products.insert_many(data)
-        flash(f"成功新增 {len(result.inserted_ids)} 筆資料到 MongoDB", "success")
+        flash(f"成功批次新增 {len(result.inserted_ids)} 筆商品到 MongoDB", "success")
 
     except Exception as e:
-        flash(f"JSON 錯誤：{e}", "danger")
+        flash(f"JSON 或資料格式錯誤：{e}", "danger")
 
     return redirect(url_for("admin_batch"))
+
 
 # Multiple Delete：一次刪除多筆
 @app.route("/batch_delete", methods=["POST"])
@@ -97,9 +117,11 @@ def batch_delete():
     flash(f"成功刪除 {result.deleted_count} 筆商品", "success")
     return redirect(url_for("admin_batch"))
 
-# ======================================================================
-# 🟦 以下是本機版（Local MySQL 版本）購物功能（Render 不會真的用到）
-# ======================================================================
+
+# ======================================================
+# 🟦 以下是「本機 MySQL 版」購物功能
+#    👉 Render 上不會真的用到，只是為了讓 navbar 不報錯
+# ======================================================
 
 import pymysql
 from contextlib import contextmanager
@@ -111,6 +133,7 @@ DB_USER = os.getenv("DB_USER", "root")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 DB_NAME = os.getenv("DB_NAME", "shop_demo")
 DB_SOCKET = (os.getenv("DB_SOCKET") or "").strip()
+
 
 def _connect_base(with_db=False):
     common = dict(
@@ -127,6 +150,7 @@ def _connect_base(with_db=False):
     else:
         return pymysql.connect(host=DB_HOST, port=DB_PORT, **common)
 
+
 @contextmanager
 def cursor(with_db=True):
     conn = _connect_base(with_db=with_db)
@@ -136,11 +160,12 @@ def cursor(with_db=True):
     finally:
         conn.close()
 
-# =========== MySQL 商品頁（只有本機能用） ============
+
+# ========= MySQL 商品頁（本機用） =========
 @app.route("/products")
 def home_mysql():
     if IS_ON_RENDER:
-        # Render 上沒有 MySQL，保險起見直接導回 MongoDB 頁
+        # Render 上沒有 MySQL，安全起見導回 MongoDB 頁面
         return redirect(url_for("admin_batch"))
 
     with cursor() as cur:
@@ -149,12 +174,15 @@ def home_mysql():
 
     return render_template("products.html", products=rows, cart_count=cart_count())
 
-# ========== Local Cart（Render 不使用） ==========
+
+# ========= 購物車相關（本機） =========
 def get_cart():
     return session.setdefault("cart", {})
 
+
 def cart_count():
     return sum(get_cart().values())
+
 
 def cart_items():
     items = []
@@ -178,13 +206,17 @@ def cart_items():
 
     return items
 
+
 @app.route("/cart")
 def view_cart():
     if IS_ON_RENDER:
         return redirect(url_for("admin_batch"))
-    return render_template("cart.html", items=cart_items(), total=sum(i["subtotal"] for i in cart_items()))
 
-# ========== Local Add to Cart ==========
+    items = cart_items()
+    total = sum(i["subtotal"] for i in items)
+    return render_template("cart.html", items=items, total=total, cart_count=cart_count())
+
+
 @app.route("/cart/add/<int:pid>", methods=["POST"])
 def add_to_cart(pid):
     if IS_ON_RENDER:
@@ -196,7 +228,7 @@ def add_to_cart(pid):
     flash("Added to cart", "success")
     return redirect(url_for("home_mysql"))
 
-# ========== Local Delete Product（MySQL） ==========
+
 @app.route("/delete_product/<int:pid>", methods=["POST"])
 def delete_product(pid):
     if IS_ON_RENDER:
@@ -206,6 +238,24 @@ def delete_product(pid):
         cur.execute("DELETE FROM products WHERE id=%s", (pid,))
     flash("商品已刪除", "success")
     return redirect(url_for("home_mysql"))
+
+
+# ========= 🔥 新增的 orders route（修 navbar 錯誤） =========
+@app.route("/orders")
+def orders():
+    if IS_ON_RENDER:
+        # Render 上沒有 MySQL，就不要查 DB，直接導回 MongoDB 頁面
+        return redirect(url_for("admin_batch"))
+
+    with cursor() as cur:
+        cur.execute(
+            "SELECT id, customer_name, customer_email, total, created_at "
+            "FROM orders ORDER BY id DESC"
+        )
+        rows = cur.fetchall()
+
+    return render_template("orders.html", orders=rows, cart_count=cart_count())
+
 
 # ======================================================
 # 啟動（Render 必須用 0.0.0.0）

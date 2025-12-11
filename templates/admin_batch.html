@@ -54,7 +54,7 @@
               <thead class="table-light">
                 <tr>
                   <th scope="col">
-                    <!-- 全選 checkbox (簡單版，只在前端) -->
+                    <!-- 全選 checkbox -->
                     <input type="checkbox" id="check-all" onclick="toggleAll(this)">
                   </th>
                   <th scope="col">Name</th>
@@ -68,12 +68,13 @@
                 {% for d in items %}
                 <tr>
                   <td>
-                    <input type="checkbox" name="delete_ids" value="{{ d['_id'] }}">
+                    <!-- ★★ 這裡改成 selected_ids ★★ -->
+                    <input type="checkbox" name="selected_ids" value="{{ d['_id'] }}">
                   </td>
-                  <td>{{ d.name or d['name'] }}</td>
-                  <td>{{ d.price or d['price'] }}</td>
-                  <td>{{ d.size or d['size'] }}</td>
-                  <td>{{ d.stock or d['stock'] }}</td>
+                  <td>{{ d['name'] }}</td>
+                  <td>{{ d['price'] }}</td>
+                  <td>{{ d['size'] }}</td>
+                  <td>{{ d['stock'] }}</td>
                   <td class="small text-muted">{{ d['_id'] }}</td>
                 </tr>
                 {% endfor %}
@@ -91,7 +92,7 @@
 
 <script>
   function toggleAll(source) {
-    const checkboxes = document.querySelectorAll('input[name="delete_ids"]');
+    const checkboxes = document.querySelectorAll('input[name="selected_ids"]');
     checkboxes.forEach(cb => cb.checked = source.checked);
   }
 </script>

@@ -15,13 +15,14 @@
           <span class="fw-bold">$ {{ '%.2f'|format(p.price) }}</span>
 
           <div class="btn-group">
-            <!-- 加入購物車 -->
+            <!-- 加入購物車：參數名 pid ✅ -->
             <form method="post" action="{{ url_for('add_to_cart', pid=p.id) }}" class="me-1">
               <button class="btn btn-primary btn-sm" {% if p.stock <= 0 %}disabled{% endif %}>Add</button>
             </form>
 
-            <!-- 刪除商品 -->
-            <form method="post" action="{{ url_for('delete_product', product_id=p.id) }}" 
+            <!-- 刪除商品：參數名也要用 pid ✅ -->
+            <form method="post"
+                  action="{{ url_for('delete_product', pid=p.id) }}"
                   onsubmit="return confirm('確定要刪除此商品嗎？');">
               <button class="btn btn-danger btn-sm">Delete</button>
             </form>

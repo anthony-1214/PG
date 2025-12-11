@@ -1,27 +1,98 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-  <meta charset="UTF-8">
-  <title>批次新增商品（MongoDB）</title>
-</head>
-<body>
-  <h1>批次新增商品（MongoDB insert_many）</h1>
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-3">批次新增商品（MongoDB insert_many / multiple-delete）</h3>
 
-  <form action="{{ url_for('batch_insert') }}" method="POST">
-    <p>請貼上 JSON 陣列：</p>
-    <textarea name="json_data" rows="10" cols="80">[
+<div class="row">
+  <!-- 左邊：貼 JSON 批次新增 -->
+  <div class="col-md-6 mb-4">
+    <div class="card">
+      <div class="card-header">
+        貼上 JSON 陣列（insert_many）
+      </div>
+      <div class="card-body">
+        <p class="small text-muted mb-2">
+          範例：
+        </p>
+<pre class="small bg-light p-2 rounded border">
+[
   { "name": "T-Shirt", "price": 390, "size": "M", "stock": 20 },
   { "name": "Hoodie", "price": 890, "size": "L", "stock": 15 }
-]</textarea><br><br>
-    <button type="submit">送出（insert_many）</button>
-  </form>
+]
+</pre>
 
-  <hr>
-  <h2>目前 MongoDB 裡的資料</h2>
-  {% for item in items %}
-    <pre>{{ item }}</pre>
-  {% else %}
-    <p>目前沒有資料</p>
-  {% endfor %}
-</body>
-</html>
+        <form method="post" action="{{ url_for('batch_insert') }}">
+          <div class="mb-3">
+            <label class="form-label">請貼上 JSON 陣列：</label>
+            <textarea name="json_data" rows="8" class="form-control"
+              placeholder='[ { "name": "T-Shirt", "price": 390, "size": "M", "stock": 20 } ]'></textarea>
+          </div>
+          <button class="btn btn-primary">送出（insert_many）</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 右邊：MongoDB 目前資料 + multiple delete -->
+  <div class="col-md-6 mb-4">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>目前 MongoDB 裡的資料</span>
+        <a href="{{ url_for('admin_batch') }}" class="btn btn-sm btn-outline-secondary">重新載入</a>
+      </div>
+      <div class="card-body">
+        {% if items %}
+        <form method="post" action="{{ url_for('batch_delete') }}">
+          <div class="mb-2">
+            <button class="btn btn-danger btn-sm" type="submit"
+              onclick="return confirm('確定要刪除勾選的商品嗎？');">
+              Delete Selected
+            </button>
+          </div>
+
+          <div class="table-responsive" style="max-height: 420px; overflow-y: auto;">
+            <table class="table table-sm align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col">
+                    <!-- 全選 checkbox (簡單版，只在前端) -->
+                    <input type="checkbox" id="check-all" onclick="toggleAll(this)">
+                  </th>
+                  <th scope="col">Name</th>
+                  <th scope="col">Price</th>
+                  <th scope="col">Size</th>
+                  <th scope="col">Stock</th>
+                  <th scope="col">_id</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for d in items %}
+                <tr>
+                  <td>
+                    <input type="checkbox" name="delete_ids" value="{{ d['_id'] }}">
+                  </td>
+                  <td>{{ d.name or d['name'] }}</td>
+                  <td>{{ d.price or d['price'] }}</td>
+                  <td>{{ d.size or d['size'] }}</td>
+                  <td>{{ d.stock or d['stock'] }}</td>
+                  <td class="small text-muted">{{ d['_id'] }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </form>
+        {% else %}
+        <p class="text-muted mb-0">目前 MongoDB 裡還沒有資料，先在左邊用 JSON 批次新增吧！</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function toggleAll(source) {
+    const checkboxes = document.querySelectorAll('input[name="delete_ids"]');
+    checkboxes.forEach(cb => cb.checked = source.checked);
+  }
+</script>
+{% endblock %}

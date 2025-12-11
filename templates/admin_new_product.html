@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block content %}
+<h3 class="mb-3">New Product</h3>
+<form method="post">
+  <div class="row g-3">
+    <div class="col-md-6">
+      <label class="form-label">Name</label>
+      <input name="name" class="form-control" required>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Price</label>
+      <input name="price" type="number" step="0.01" class="form-control" required>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Size</label>
+      <input name="size" class="form-control" placeholder="S/M/L/XL or F" value="F">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">Stock</label>
+      <input name="stock" type="number" class="form-control" value="10">
+    </div>
+    <div class="col-md-9">
+      <label class="form-label">Image URL (optional)</label>
+      <input name="image_url" class="form-control" placeholder="https://...">
+    </div>
+    <div class="col-12 d-grid mt-2">
+      <button class="btn btn-success">Create</button>
+    </div>
+  </div>
+</form>
+{% endblock %}

@@ -149,10 +149,10 @@ def admin_new_product():
 # ==========================
 #   刪除商品
 # ==========================
-@app.route("/delete_product/<product_id>", methods=["POST"])
-def delete_product(product_id):
+@app.route("/delete_product/<pid>", methods=["POST"])
+def delete_product(pid):
     try:
-        mongo_products.delete_one({"_id": ObjectId(product_id)})
+        mongo_products.delete_one({"_id": ObjectId(pid)})
         flash("Product deleted", "success")
     except Exception as e:
         flash(f"刪除失敗：{e}", "danger")
@@ -171,19 +171,19 @@ def view_cart():
     )
 
 
-@app.route("/cart/add/<product_id>", methods=["POST"])
-def add_to_cart(product_id):
+@app.route("/cart/add/<pid>", methods=["POST"])
+def add_to_cart(pid):
     c = get_cart()
-    c[product_id] = c.get(product_id, 0) + 1
+    c[pid] = c.get(pid, 0) + 1
     session.modified = True
     flash("Added to cart", "success")
     return redirect(url_for("home"))
 
 
-@app.route("/cart/remove/<product_id>", methods=["POST"])
-def remove_from_cart(product_id):
+@app.route("/cart/remove/<pid>", methods=["POST"])
+def remove_from_cart(pid):
     c = get_cart()
-    c.pop(product_id, None)
+    c.pop(pid, None)
     session.modified = True
     return redirect(url_for("view_cart"))
 
@@ -265,7 +265,6 @@ def orders():
 @app.route("/admin_batch")
 def admin_batch():
     docs = list(mongo_products.find().sort("_id", -1))
-    # 讓模板顯示原始 Mongo 文本
     for d in docs:
         d["_id"] = str(d["_id"])
     return render_template("admin_batch.html", items=docs, cart_count=cart_count())
@@ -296,7 +295,6 @@ def batch_insert():
     except Exception as e:
         flash(f"JSON 或資料格式錯誤：{e}", "danger")
 
-    # 作業需求通常是回到 Batch；如果想跟截圖一樣回 Products，可以改成 url_for("home")
     return redirect(url_for("admin_batch"))
 
 

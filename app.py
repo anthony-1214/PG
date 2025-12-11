@@ -40,7 +40,7 @@ mongo_db = mongo_client[MONGO_DB_NAME]
 mongo_products = mongo_db[MONGO_COLLECTION_NAME]
 
 # ======================================================
-# MySQL 設定（本機用，不在 Render 連）
+# MySQL 設定
 # ======================================================
 DB_HOST = os.getenv("DB_HOST", "127.0.0.1")
 DB_PORT = int(os.getenv("DB_PORT", "3306"))
@@ -48,6 +48,9 @@ DB_USER = os.getenv("DB_USER", "root")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 DB_NAME = os.getenv("DB_NAME", "shop_demo")
 DB_SOCKET = (os.getenv("DB_SOCKET") or "").strip()
+
+# ✅ 只要是在 Render 並且 DB_HOST 還是 localhost，就視為不使用 MySQL
+USE_MYSQL = not (IS_ON_RENDER and DB_HOST in ("127.0.0.1", "localhost"))
 
 
 def _connect_base(with_db=False):
@@ -76,6 +79,46 @@ def cursor(with_db=True):
         conn.close()
 
 
+# （可選）本機初始化 MySQL schema
+def ensure_schema():
+    with _connect_base(with_db=False) as conn:
+        with conn.cursor() as cur:
+            cur.execute(f"CREATE DATABASE IF NOT EXISTS {DB_NAME} DEFAULT CHARACTER SET utf8mb4;")
+
+    with cursor(with_db=True) as cur:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS products (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(120) NOT NULL,
+                price DECIMAL(10,2) NOT NULL,
+                size VARCHAR(20) DEFAULT 'F',
+                stock INT NOT NULL DEFAULT 0,
+                image_url VARCHAR(255) DEFAULT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS orders (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                customer_name VARCHAR(120),
+                customer_email VARCHAR(120),
+                total DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        """)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS order_items (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                order_id INT NOT NULL,
+                product_id INT NOT NULL,
+                qty INT NOT NULL,
+                price DECIMAL(10,2) NOT NULL,
+                FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+                FOREIGN KEY (product_id) REFERENCES products(id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+        """)
+
+
 # ======================================================
 # Flask 初始化
 # ======================================================
@@ -88,18 +131,18 @@ app.secret_key = SECRET_KEY
 
 @app.route("/")
 def index():
-    # Render：直接看 MongoDB 批次頁
-    if IS_ON_RENDER:
-        return redirect(url_for("admin_batch"))
-    # 本機：看 MySQL 商品列表
-    return redirect(url_for("home_mysql"))
+    # 如果有 MySQL（本機 or 遠端），首頁進 Products
+    if USE_MYSQL:
+        return redirect(url_for("home_mysql"))
+    # 否則只展示 MongoDB Batch 頁
+    return redirect(url_for("admin_batch"))
 
 
 @app.route("/home")
 def home():
-    if IS_ON_RENDER:
-        return redirect(url_for("admin_batch"))
-    return redirect(url_for("home_mysql"))
+    if USE_MYSQL:
+        return redirect(url_for("home_mysql"))
+    return redirect(url_for("admin_batch"))
 
 
 # ======================================================
@@ -157,7 +200,7 @@ def batch_delete():
 
 
 # ======================================================
-# ======= 本機 MySQL 商城功能（Render 只保留 endpoint）=======
+# ======= MySQL 商城功能（Render 可關閉 MySQL）=======
 # ======================================================
 
 def get_cart():
@@ -193,8 +236,8 @@ def cart_items():
 
 @app.route("/products")
 def home_mysql():
-    # Render 上沒有 MySQL：避免連線錯誤，直接導回 MongoDB demo
-    if IS_ON_RENDER:
+    if not USE_MYSQL:
+        # 線上 Demo 沒有 MySQL → 回 MongoDB 頁
         return redirect(url_for("admin_batch"))
 
     with cursor() as cur:
@@ -206,7 +249,7 @@ def home_mysql():
 
 @app.route("/cart")
 def view_cart():
-    if IS_ON_RENDER:
+    if not USE_MYSQL:
         return redirect(url_for("admin_batch"))
 
     items = cart_items()
@@ -216,7 +259,7 @@ def view_cart():
 
 @app.route("/cart/add/<int:pid>", methods=["POST"])
 def add_to_cart(pid):
-    if IS_ON_RENDER:
+    if not USE_MYSQL:
         return redirect(url_for("admin_batch"))
 
     c = get_cart()
@@ -228,7 +271,7 @@ def add_to_cart(pid):
 
 @app.route("/delete_product/<int:pid>", methods=["POST"])
 def delete_product(pid):
-    if IS_ON_RENDER:
+    if not USE_MYSQL:
         return redirect(url_for("admin_batch"))
 
     with cursor() as cur:
@@ -237,15 +280,12 @@ def delete_product(pid):
     return redirect(url_for("home_mysql"))
 
 
-# ★★★ 補上 navbar 用的「新增商品」 endpoint ★★★
 @app.route("/admin/products/new", methods=["GET", "POST"])
 def admin_new_product():
-    # Render：不連 MySQL，只給提示訊息然後導回 MongoDB 頁面
-    if IS_ON_RENDER:
+    if not USE_MYSQL:
         flash("線上 Demo 只開啟 MongoDB 批次功能，新增商品請在本機 MySQL 版操作。", "info")
         return redirect(url_for("admin_batch"))
 
-    # 本機：真的顯示 / 處理新增商品表單
     if request.method == "POST":
         name = request.form.get("name", "").strip()
         price = request.form.get("price", "0").strip()
@@ -272,8 +312,7 @@ def admin_new_product():
 
 @app.route("/orders")
 def orders():
-    if IS_ON_RENDER:
-        # Render 上不查 MySQL
+    if not USE_MYSQL:
         return redirect(url_for("admin_batch"))
 
     with cursor() as cur:
@@ -290,5 +329,12 @@ def orders():
 # 啟動（Render 必須用 0.0.0.0）
 # ======================================================
 if __name__ == "__main__":
+    if USE_MYSQL:
+        # 本機開發時自動建表（有就不會重建）
+        try:
+            ensure_schema()
+        except Exception as e:
+            print("ensure_schema error:", e)
+
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=False)

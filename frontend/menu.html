@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>SmartMeal - Menu</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <div class="nav">
+    <div class="nav-inner">
+      <div class="brand">🍜 SmartMeal <span class="badge">Menu</span></div>
+      <div class="nav-links">
+        <a href="index.html">Login</a>
+        <a href="menu.html">Menu</a>
+        <a href="orders.html">My Orders</a>
+        <a href="vendor.html">Vendor</a>
+        <a href="#" onclick="logout()">Logout</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="grid">
+      <div class="card">
+        <h2>菜單 / Menu</h2>
+        <p class="sub">選擇品項加入購物車，再送出訂單。</p>
+
+        <div class="row" style="justify-content:space-between">
+          <button class="btn" onclick="seed()">Seed sample menu</button>
+          <div class="tag">API: <span class="kbd" id="apiBase"></span></div>
+        </div>
+
+        <div class="hr"></div>
+
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Item</th><th>Category</th><th>Price</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="menuBody"></tbody>
+        </table>
+
+        <div id="menuMsg" class="toast"></div>
+      </div>
+
+      <div class="card">
+        <h2>購物車 / Cart</h2>
+        <p class="sub">可調整數量，並顯示總價。</p>
+
+        <div id="cartBox"></div>
+
+        <div class="hr"></div>
+
+        <div class="row" style="justify-content:space-between">
+          <div class="tag">Total: <span class="kbd" id="totalText">$0</span></div>
+          <button class="btn primary" onclick="placeOrder()">Place Order</button>
+        </div>
+
+        <div id="cartMsg" class="toast"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="api.js"></script>
+  <script>
+    apiBase.textContent = API_BASE;
+
+    let menuList = [];
+    let cart = {}; // menu_item_id -> {name, unit_price, qty}
+
+    function cartToItems(){
+      return Object.entries(cart).map(([menu_item_id, v]) => ({
+        menu_item_id,
+        qty: v.qty
+      }));
+    }
+
+    function calcTotal(){
+      let t = 0;
+      for (const k in cart) t += cart[k].unit_price * cart[k].qty;
+      totalText.textContent = fmtMoney(t);
+      return t;
+    }
+
+    function renderCart(){
+      const keys = Object.keys(cart);
+      if (keys.length === 0){
+        cartBox.innerHTML = `<p class="sub">目前沒有品項，先從左邊加入吧！</p>`;
+        calcTotal();
+        return;
+      }
+
+      cartBox.innerHTML = keys.map(k => {
+        const it = cart[k];
+        return `
+          <div class="card" style="padding:12px;margin-bottom:10px">
+            <div class="row" style="justify-content:space-between">
+              <div>
+                <div style="font-weight:700">${it.name}</div>
+                <div class="sub" style="margin:4px 0 0">單價 ${fmtMoney(it.unit_price)}</div>
+              </div>
+              <div class="row">
+                <button class="btn small" onclick="dec('${k}')">-</button>
+                <span class="kbd">${it.qty}</span>
+                <button class="btn small" onclick="inc('${k}')">+</button>
+                <button class="btn small danger" onclick="delItem('${k}')">Remove</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      calcTotal();
+    }
+
+    function add(id){
+      const it = menuList.find(x => x._id === id);
+      if (!it) return;
+      if (!cart[id]) cart[id] = { name: it.name, unit_price: it.price, qty: 0 };
+      cart[id].qty += 1;
+      renderCart();
+    }
+    function inc(id){ cart[id].qty += 1; renderCart(); }
+    function dec(id){ cart[id].qty = Math.max(1, cart[id].qty - 1); renderCart(); }
+    function delItem(id){ delete cart[id]; renderCart(); }
+
+    async function loadMenu(){
+      menuMsg.textContent = "Loading menu...";
+      try{
+        const data = await api("/menu");
+        menuList = data.menu || [];
+        menuBody.innerHTML = menuList.map(it => `
+          <tr>
+            <td>${it.name}</td>
+            <td><span class="tag">${it.category || "-"}</span></td>
+            <td><span class="kbd">${fmtMoney(it.price)}</span></td>
+            <td><button class="btn small success" onclick="add('${it._id}')">Add</button></td>
+          </tr>
+        `).join("");
+        menuMsg.textContent = `✅ Loaded ${menuList.length} items.`;
+      }catch(e){
+        menuMsg.textContent = "❌ " + e.message;
+      }
+    }
+
+    async function seed(){
+      menuMsg.textContent = "Seeding sample menu...";
+      try{
+        const r = await api("/seed/menu", "POST", {});
+        menuMsg.textContent = `✅ Seed OK. items=${r.count}`;
+        await loadMenu();
+      }catch(e){
+        menuMsg.textContent = "❌ " + e.message;
+      }
+    }
+
+    async function placeOrder(){
+      cartMsg.textContent = "Placing order...";
+      try{
+        const items = cartToItems();
+        if (items.length === 0) throw new Error("Cart is empty");
+        const r = await api("/order","POST",{ items });
+        cart = {};
+        renderCart();
+        cartMsg.textContent = `✅ Order placed! order_id=${r.order_id}`;
+        setTimeout(()=>window.location="orders.html", 600);
+      }catch(e){
+        cartMsg.textContent = "❌ " + e.message;
+      }
+    }
+
+    renderCart();
+    loadMenu();
+  </script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>SmartMeal - My Orders</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <div class="nav">
+    <div class="nav-inner">
+      <div class="brand">🧾 SmartMeal <span class="badge">My Orders</span></div>
+      <div class="nav-links">
+        <a href="index.html">Login</a>
+        <a href="menu.html">Menu</a>
+        <a href="orders.html">My Orders</a>
+        <a href="vendor.html">Vendor</a>
+        <a href="#" onclick="logout()">Logout</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <h2>我的訂單 / My Orders</h2>
+      <p class="sub">查看訂單狀態；店家改 READY 後這裡會同步更新。</p>
+
+      <button class="btn" onclick="loadMy()">Refresh</button>
+      <div class="hr"></div>
+
+      <div id="box"></div>
+      <div id="msg" class="toast"></div>
+    </div>
+  </div>
+
+  <script src="api.js"></script>
+  <script>
+    function render(orders){
+      if (!orders || orders.length===0){
+        box.innerHTML = `<p class="sub">目前沒有訂單。去 <a href="menu.html" class="kbd">Menu</a> 下第一筆吧！</p>`;
+        return;
+      }
+      box.innerHTML = orders.map(o => `
+        <div class="card" style="margin-bottom:12px">
+          <div class="row" style="justify-content:space-between">
+            <div>
+              <div style="font-weight:800">Order <span class="kbd">${o._id}</span></div>
+              <div class="sub" style="margin:6px 0 0">Created: <span class="kbd">${o.created_at || "-"}</span></div>
+            </div>
+            <div>${statusTag(o.status)}</div>
+          </div>
+          <div class="hr"></div>
+          <div class="sub" style="margin:0 0 8px">Items:</div>
+          <ul class="sub" style="margin:0;padding-left:18px">
+            ${(o.items||[]).map(it=>`<li>${it.name} × ${it.qty}（${fmtMoney(it.subtotal)}）</li>`).join("")}
+          </ul>
+          <div class="hr"></div>
+          <div class="row" style="justify-content:space-between">
+            <div class="tag">Total: <span class="kbd">${fmtMoney(o.total_price)}</span></div>
+            <div class="tag">User: <span class="kbd">${o.user_id || "-"}</span></div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    async function loadMy(){
+      msg.textContent = "Loading...";
+      try{
+        const r = await api("/orders/my");
+        render(r.orders || []);
+        msg.textContent = "✅ Updated.";
+      }catch(e){
+        msg.textContent = "❌ " + e.message + "（請先 Login）";
+      }
+    }
+
+    loadMy();
+  </script>
+</body>
+</html>

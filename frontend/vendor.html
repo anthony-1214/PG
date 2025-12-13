@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>SmartMeal - Vendor</title>
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+  <div class="nav">
+    <div class="nav-inner">
+      <div class="brand">🏪 SmartMeal <span class="badge">Vendor Dashboard</span></div>
+      <div class="nav-links">
+        <a href="index.html">Login</a>
+        <a href="menu.html">Menu</a>
+        <a href="orders.html">My Orders</a>
+        <a href="vendor.html">Vendor</a>
+        <a href="#" onclick="logout()">Logout</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <h2>店家訂單管理</h2>
+      <p class="sub">需要 vendor/admin 權限。可把訂單狀態切成 READY / COMPLETED。</p>
+
+      <div class="row">
+        <button class="btn" onclick="loadOrders()">Refresh</button>
+        <span class="tag">Tip: 用無痕視窗登入 vendor 測試最乾淨</span>
+      </div>
+
+      <div class="hr"></div>
+
+      <div id="orders"></div>
+      <div id="msg" class="toast"></div>
+    </div>
+  </div>
+
+  <script src="api.js"></script>
+  <script>
+    function render(list){
+      if (!list || list.length===0){
+        orders.innerHTML = `<p class="sub">目前沒有訂單。</p>`;
+        return;
+      }
+      orders.innerHTML = list.map(o => `
+        <div class="card" style="margin-bottom:12px">
+          <div class="row" style="justify-content:space-between">
+            <div>
+              <div style="font-weight:800">Order <span class="kbd">${o._id}</span></div>
+              <div class="sub" style="margin:6px 0 0">Created: <span class="kbd">${o.created_at || "-"}</span></div>
+            </div>
+            <div>${statusTag(o.status)}</div>
+          </div>
+
+          <div class="hr"></div>
+
+          <div class="sub" style="margin:0 0 8px">Items:</div>
+          <ul class="sub" style="margin:0;padding-left:18px">
+            ${(o.items||[]).map(it=>`<li>${it.name} × ${it.qty}</li>`).join("")}
+          </ul>
+
+          <div class="hr"></div>
+
+          <div class="row" style="justify-content:space-between">
+            <div class="tag">Total: <span class="kbd">${fmtMoney(o.total_price)}</span></div>
+            <div class="row">
+              <button class="btn small" onclick="setStatus('${o._id}','PREPARING')">PREPARING</button>
+              <button class="btn small success" onclick="setStatus('${o._id}','READY')">READY</button>
+              <button class="btn small" onclick="setStatus('${o._id}','COMPLETED')">COMPLETED</button>
+              <button class="btn small danger" onclick="setStatus('${o._id}','CANCELLED')">CANCEL</button>
+            </div>
+          </div>
+        </div>
+      `).join("");
+    }
+
+    async function loadOrders(){
+      msg.textContent = "Loading orders...";
+      try{
+        const data = await api("/orders"); // 後端這支回傳 array
+        render(data);
+        msg.textContent = "✅ Updated.";
+      }catch(e){
+        msg.textContent = "❌ " + e.message + "（請用 vendor 登入）";
+      }
+    }
+
+    async function setStatus(id, status){
+      msg.textContent = "Updating...";
+      try{
+        await api("/order/status","POST",{ id, status });
+        await loadOrders();
+      }catch(e){
+        msg.textContent = "❌ " + e.message;
+      }
+    }
+
+    loadOrders();
+  </script>
+</body>
+</html>

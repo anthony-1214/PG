@@ -1,108 +1,23 @@
-<!doctype html>
-<html lang="zh-Hant">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>SmartMeal - Login</title>
-  <link rel="stylesheet" href="./style.css"/>
-</head>
-<body>
-  <div class="nav">
-    <div class="nav-inner">
-      <div class="brand">🍜 SmartMeal <span class="badge">MongoDB Atlas • Render-ready</span></div>
-      <div class="nav-links">
-        <a href="menu.html">Menu</a>
-        <a href="orders.html">My Orders</a>
-        <a href="vendor.html">Vendor</a>
-      </div>
-    </div>
-  </div>
-
-  <div class="container">
-    <div class="grid">
-      <div class="card">
-        <h2>登入 / Login</h2>
-        <p class="sub">輸入帳號密碼登入後，學生可點餐；店家可管理訂單狀態。</p>
-
-        <div class="row">
-          <div class="field">
-            <label>Email</label>
-            <input id="loginEmail" placeholder="you@example.com"/>
-          </div>
-          <div class="field">
-            <label>Password</label>
-            <input id="loginPw" type="password" placeholder="••••••••"/>
-          </div>
-          <div>
-            <label style="opacity:0">.</label>
-            <button class="btn primary" onclick="doLogin()">Login</button>
-          </div>
-        </div>
-
-        <div id="loginMsg" class="toast"></div>
-
-        <div class="hr"></div>
-
-        <h2>註冊 / Register</h2>
-        <p class="sub">Demo 用：可建立學生帳號或店家帳號（role=vendor）。</p>
-
-        <div class="row">
-          <div class="field">
-            <label>Name</label>
-            <input id="regName" placeholder="Anthony"/>
-          </div>
-          <div class="field">
-            <label>Email</label>
-            <input id="regEmail" placeholder="new@example.com"/>
-          </div>
-          <div class="field">
-            <label>Password</label>
-            <input id="regPw" type="password" placeholder="至少 6 碼"/>
-          </div>
-          <div class="field">
-            <label>Role</label>
-            <select id="regRole">
-              <option value="student">student</option>
-              <option value="vendor">vendor</option>
-            </select>
-          </div>
-          <div>
-            <label style="opacity:0">.</label>
-            <button class="btn success" onclick="doRegister()">Create</button>
-          </div>
-        </div>
-
-        <div id="regMsg" class="toast"></div>
-
-        <div class="footer">
-          ✅ 建議 Demo：先建立 student 下單，再用 vendor 登入到 Vendor 頁改 READY。
-        </div>
-      </div>
-
-      <div class="card">
-        <h2>快速導覽</h2>
-        <p class="sub">你可以用下面順序錄 10 分鐘 Demo。</p>
-
-        <ol class="sub" style="margin:0;padding-left:18px">
-          <li>（一次）先到 Menu 頁點 <span class="kbd">Seed sample menu</span></li>
-          <li>用 student 登入 → 點餐 → Place Order</li>
-          <li>用 vendor 登入 → Vendor 頁 → 改 READY</li>
-          <li>回 My Orders 檢查狀態</li>
-        </ol>
-
-        <div class="hr"></div>
-
-        <button class="btn danger" onclick="logout()">Logout (clear token)</button>
-        <div class="footer">如果狀態怪怪的，先按 Logout 清 token，再重登入。</div>
-      </div>
-    </div>
-  </div>
-
   <script src="./api.js"></script>
+  <script>
+    // 取得 DOM 元素（不要依賴 id 自動變全域變數）
+    const loginMsg   = document.getElementById("loginMsg");
+    const loginEmail = document.getElementById("loginEmail");
+    const loginPw    = document.getElementById("loginPw");
+
+    const regMsg   = document.getElementById("regMsg");
+    const regName  = document.getElementById("regName");
+    const regEmail = document.getElementById("regEmail");
+    const regPw    = document.getElementById("regPw");
+    const regRole  = document.getElementById("regRole");
+
     async function doLogin(){
       loginMsg.textContent = "Logging in...";
       try{
-        const res = await api("/login", "POST", { email: loginEmail.value, password: loginPw.value });
+        const res = await api("/login", "POST", {
+          email: loginEmail.value,
+          password: loginPw.value
+        });
         setAuth(res.token, res.user?.role);
         localStorage.setItem("user", JSON.stringify(res.user || {}));
         loginMsg.textContent = "✅ Login success! Redirecting to menu...";
@@ -129,6 +44,10 @@
         regMsg.textContent = "❌ " + e.message;
       }
     }
+
+    // 讓 onclick="doLogin()" / doRegister() 一定找得到
+    window.doLogin = doLogin;
+    window.doRegister = doRegister;
   </script>
 </body>
 </html>

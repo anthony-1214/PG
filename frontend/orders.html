@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>SmartMeal - My Orders</title>
-  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="./style.css"/>
 </head>
 <body>
   <div class="nav">
@@ -34,11 +34,16 @@
   </div>
 
   <script src="./api.js"></script>
+  <script>
+    const box = document.getElementById("box");
+    const msg = document.getElementById("msg");
+
     function render(orders){
-      if (!orders || orders.length===0){
+      if (!orders || orders.length === 0){
         box.innerHTML = `<p class="sub">目前沒有訂單。去 <a href="menu.html" class="kbd">Menu</a> 下第一筆吧！</p>`;
         return;
       }
+
       box.innerHTML = orders.map(o => `
         <div class="card" style="margin-bottom:12px">
           <div class="row" style="justify-content:space-between">
@@ -48,12 +53,16 @@
             </div>
             <div>${statusTag(o.status)}</div>
           </div>
+
           <div class="hr"></div>
+
           <div class="sub" style="margin:0 0 8px">Items:</div>
           <ul class="sub" style="margin:0;padding-left:18px">
-            ${(o.items||[]).map(it=>`<li>${it.name} × ${it.qty}（${fmtMoney(it.subtotal)}）</li>`).join("")}
+            ${(o.items || []).map(it => `<li>${it.name} × ${it.qty}（${fmtMoney(it.subtotal)}）</li>`).join("")}
           </ul>
+
           <div class="hr"></div>
+
           <div class="row" style="justify-content:space-between">
             <div class="tag">Total: <span class="kbd">${fmtMoney(o.total_price)}</span></div>
             <div class="tag">User: <span class="kbd">${o.user_id || "-"}</span></div>
@@ -72,6 +81,9 @@
         msg.textContent = "❌ " + e.message + "（請先 Login）";
       }
     }
+
+    // 讓 onclick 一定找得到
+    window.loadMy = loadMy;
 
     loadMy();
   </script>

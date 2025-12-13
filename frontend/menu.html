@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>SmartMeal - Menu</title>
-  <link rel="stylesheet" href="style.css"/>
+  <link rel="stylesheet" href="./style.css"/>
 </head>
 <body>
   <div class="nav">
@@ -64,7 +64,16 @@
   </div>
 
   <script src="./api.js"></script>
-    apiBase.textContent = API_BASE;
+  <script>
+    // DOM
+    const apiBaseEl = document.getElementById("apiBase");
+    const menuBody  = document.getElementById("menuBody");
+    const menuMsg   = document.getElementById("menuMsg");
+    const cartBox   = document.getElementById("cartBox");
+    const totalText = document.getElementById("totalText");
+    const cartMsg   = document.getElementById("cartMsg");
+
+    apiBaseEl.textContent = API_BASE;
 
     let menuList = [];
     let cart = {}; // menu_item_id -> {name, unit_price, qty}
@@ -169,6 +178,14 @@
         cartMsg.textContent = "❌ " + e.message;
       }
     }
+
+    // expose for onclick
+    window.seed = seed;
+    window.placeOrder = placeOrder;
+    window.add = add;
+    window.inc = inc;
+    window.dec = dec;
+    window.delItem = delItem;
 
     renderCart();
     loadMenu();

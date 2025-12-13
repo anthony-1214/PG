@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>SmartMeal - Vendor</title>
-  <link rel="stylesheet" href="./style.css"/>
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
   <div class="nav">
@@ -23,7 +23,7 @@
   <div class="container">
     <div class="card">
       <h2>店家訂單管理</h2>
-      <p class="sub">需要 vendor/admin 權限。可把訂單狀態切成 PREPARING / READY / COMPLETED / CANCELLED。</p>
+      <p class="sub">需要 vendor/admin 權限。可把訂單狀態切成 READY / COMPLETED。</p>
 
       <div class="row">
         <button class="btn" onclick="loadOrders()">Refresh</button>
@@ -37,18 +37,14 @@
     </div>
   </div>
 
-  <script src="./api.js"></script>
+  <script src="api.js"></script>
   <script>
-    const ordersEl = document.getElementById("orders");
-    const msg = document.getElementById("msg");
-
     function render(list){
-      if (!list || list.length === 0){
-        ordersEl.innerHTML = `<p class="sub">目前沒有訂單。</p>`;
+      if (!list || list.length===0){
+        orders.innerHTML = `<p class="sub">目前沒有訂單。</p>`;
         return;
       }
-
-      ordersEl.innerHTML = list.map(o => `
+      orders.innerHTML = list.map(o => `
         <div class="card" style="margin-bottom:12px">
           <div class="row" style="justify-content:space-between">
             <div>
@@ -62,7 +58,7 @@
 
           <div class="sub" style="margin:0 0 8px">Items:</div>
           <ul class="sub" style="margin:0;padding-left:18px">
-            ${(o.items || []).map(it => `<li>${it.name} × ${it.qty}</li>`).join("")}
+            ${(o.items||[]).map(it=>`<li>${it.name} × ${it.qty}</li>`).join("")}
           </ul>
 
           <div class="hr"></div>
@@ -83,7 +79,7 @@
     async function loadOrders(){
       msg.textContent = "Loading orders...";
       try{
-        const data = await api("/orders"); // 後端回傳 array
+        const data = await api("/orders"); // 後端這支回傳 array
         render(data);
         msg.textContent = "✅ Updated.";
       }catch(e){
@@ -94,16 +90,12 @@
     async function setStatus(id, status){
       msg.textContent = "Updating...";
       try{
-        await api("/order/status", "POST", { id, status });
+        await api("/order/status","POST",{ id, status });
         await loadOrders();
       }catch(e){
         msg.textContent = "❌ " + e.message;
       }
     }
-
-    // expose for onclick
-    window.loadOrders = loadOrders;
-    window.setStatus = setStatus;
 
     loadOrders();
   </script>

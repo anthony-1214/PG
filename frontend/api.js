@@ -1,18 +1,24 @@
-const API_BASE = 'https://pg-1-3sfs.onrender.com'; // 上 Render 再換成 https://xxx.onrender.com
+const API_BASE = 'https://pg-1-3sfs.onrender.com';
 
-function getToken(){ return localStorage.getItem("token"); }
-function setAuth(token, role){
+/* ===== Auth helpers ===== */
+function getToken() {
+  return localStorage.getItem("token");
+}
+
+function setAuth(token, role) {
   localStorage.setItem("token", token);
   if (role) localStorage.setItem("role", role);
 }
-function logout(){
+
+function logout() {
   localStorage.removeItem("token");
   localStorage.removeItem("role");
   localStorage.removeItem("user");
   window.location = "index.html";
 }
 
-async function api(path, method="GET", body=null){
+/* ===== API wrapper ===== */
+async function api(path, method = "GET", body = null) {
   const headers = { "Content-Type": "application/json" };
   const t = getToken();
   if (t) headers["Authorization"] = "Bearer " + t;
@@ -23,17 +29,23 @@ async function api(path, method="GET", body=null){
     body: body ? JSON.stringify(body) : null
   });
 
-  const data = await res.json().catch(()=>({}));
-  if (!res.ok) throw new Error(data.error || ("HTTP " + res.status));
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.error || ("HTTP " + res.status));
+  }
   return data;
 }
 
-function fmtMoney(n){ return "$" + Number(n||0).toLocaleString(); }
-function statusTag(status){
-  const s = (status||"").toUpperCase();
-  if (s==="READY") return `<span class="tag ready">● READY</span>`;
-  if (s==="PREPARING") return `<span class="tag prep">● PREPARING</span>`;
-  if (s==="COMPLETED") return `<span class="tag done">● COMPLETED</span>`;
-  if (s==="CANCELLED") return `<span class="tag cancel">● CANCELLED</span>`;
-  return `<span class="tag">● ${s}</span>`;
+/* ===== UI helpers ===== */
+function fmtMoney(n) {
+  return "$" + Number(n || 0).toLocaleString();
+}
+
+function statusTag(status) {
+  const s = String(status || "").toUpperCase();
+  if (s === "READY") return `<span class="tag ready">READY</span>`;
+  if (s === "PREPARING") return `<span class="tag prep">PREPARING</span>`;
+  if (s === "COMPLETED") return `<span class="tag done">COMPLETED</span>`;
+  if (s === "CANCELLED") return `<span class="tag cancel">CANCELLED</span>`;
+  return `<span class="tag">${s}</span>`;
 }

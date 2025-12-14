@@ -1,15 +1,26 @@
-# SmartMeal Render Version
+# Database-system
 
-## Deploy Backend on Render
-- Create Web Service
-- Root: backend
-- Dockerfile auto-detected
-- Env:
-  - MONGODB_URI (MongoDB Atlas)
-  - SECRET_KEY
+HW1:
 
-## Deploy Frontend on Render
-- Create Static Site
-- Root: frontend
+Youtube Link:https://youtu.be/KZawmlKaIVE
 
-This version is simplified and 100% Render-compatible.
+HW2:
+
+Youtube Link:https://youtu.be/ayfLzPSpCg4
+
+HW3:
+
+Youtube Link:https://youtu.be/epCM_1smzcQ
+
+Render Link:https://pg-fsxb.onrender.com/admin_batch
+
+HW4:
+
+Youtube Link:https://youtu.be/XH5mRtncKHk
+
+Render Link:https://pg-fsxb.onrender.com/admin_batch
+
+Final Proposal:
+
+Youtube Link:https://youtu.be/qIT0PIDfKSM
+

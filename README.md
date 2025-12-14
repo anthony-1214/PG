@@ -24,3 +24,8 @@ Final Proposal:
 
 Youtube Link:https://youtu.be/qIT0PIDfKSM
 
+Final Project:
+
+Youtube Link:https://youtu.be/sk7pdjdctY0
+
+Render Link:https://frontend-1x38.onrender.com/index.html
